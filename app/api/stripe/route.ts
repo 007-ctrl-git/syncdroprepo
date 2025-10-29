@@ -35,37 +35,34 @@ export async function POST(request: NextRequest) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const email = session.metadata?.email || session.customer_email;
+    const orderId = session.metadata?.orderId;
     const tier = session.metadata?.tier as "standard" | "pro";
     const paymentIntentId = session.payment_intent as string;
 
-    if (!email) {
-      console.error("No email found in session");
+    if (!orderId) {
+      console.error("No orderId found in session metadata");
       return NextResponse.json(
-        { error: "Email not found" },
+        { error: "Order ID not found" },
         { status: 400 }
       );
     }
 
     try {
-      const { data: order, error: insertError } = await supabase
+      const { error: updateError } = await supabase
         .from("orders")
-        .insert({
-          email,
-          tier,
+        .update({
           stripe_payment_intent_id: paymentIntentId,
           status: "processing",
         })
-        .select()
-        .single();
+        .eq("id", orderId);
 
-      if (insertError || !order) throw insertError || new Error("Order not created");
+      if (updateError) throw updateError;
 
-      processOrder(order.id, email, tier);
+      processOrder(orderId, tier);
 
       return NextResponse.json({ received: true });
     } catch (error: any) {
-      console.error("Error creating order:", error);
+      console.error("Error updating order:", error);
       return NextResponse.json(
         { error: error.message },
         { status: 500 }
@@ -76,13 +73,21 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-async function processOrder(orderId: string, email: string, tier: "standard" | "pro") {
+async function processOrder(orderId: string, tier: "standard" | "pro") {
   try {
+    const { data: order } = await supabase
+      .from("orders")
+      .select("audio_file_url, email, lyrics")
+      .eq("id", orderId)
+      .single();
+
+    if (!order) throw new Error("Order not found");
+
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    const mockLrcUrl = "https://example.com/song.lrc";
-    const mockSrtUrl = "https://example.com/song.srt";
-    const mockVideoUrl = tier === "pro" ? "https://example.com/karaoke.mp4" : null;
+    const mockLrcUrl = `https://example.com/song-${orderId}.lrc`;
+    const mockSrtUrl = `https://example.com/song-${orderId}.srt`;
+    const mockVideoUrl = tier === "pro" ? `https://example.com/karaoke-${orderId}.mp4` : null;
 
     const { error: updateError } = await supabase
       .from("orders")
@@ -97,6 +102,8 @@ async function processOrder(orderId: string, email: string, tier: "standard" | "
     if (updateError) throw updateError;
 
     console.log(`Order ${orderId} processed successfully`);
+    console.log(`Audio URL: ${order.audio_file_url}`);
+    console.log(`Lyrics preview: ${order.lyrics?.substring(0, 100)}...`);
   } catch (error) {
     console.error("Error processing order:", error);
 
