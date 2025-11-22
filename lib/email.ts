@@ -4,6 +4,8 @@ interface EmailData {
   tier: "standard" | "pro";
   lrcUrl: string;
   srtUrl: string;
+  lrcContent: string;
+  srtContent: string;
   videoUrl?: string;
   expiresAt: string;
 }
@@ -100,6 +102,9 @@ export async function sendDownloadEmail(data: EmailData): Promise<void> {
   `;
 
   try {
+    const lrcBase64 = Buffer.from(data.lrcContent).toString('base64');
+    const srtBase64 = Buffer.from(data.srtContent).toString('base64');
+
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -111,6 +116,16 @@ export async function sendDownloadEmail(data: EmailData): Promise<void> {
         to: data.to,
         subject: "🎵 Your SyncDrop Files Are Ready!",
         html: htmlContent,
+        attachments: [
+          {
+            filename: `song-${data.orderId}.lrc`,
+            content: lrcBase64,
+          },
+          {
+            filename: `song-${data.orderId}.srt`,
+            content: srtBase64,
+          },
+        ],
       }),
     });
 

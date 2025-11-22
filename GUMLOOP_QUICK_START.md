@@ -26,10 +26,17 @@ Create a Gumloop workflow that returns MOCK data. This lets you test your entire
   "outputs": {
     "lrc_url": "https://example.com/mock-song.lrc",
     "srt_url": "https://example.com/mock-song.srt",
+    "lrc_content": "[00:12.00]This is a test\n[00:15.00]Mock lyric line",
+    "srt_content": "1\n00:00:12,000 --> 00:00:15,000\nThis is a test\n\n2\n00:00:15,000 --> 00:00:18,000\nMock lyric line",
     "video_url": "https://example.com/mock-video.mp4"
   }
 }
 ```
+
+**Important:** Response MUST include:
+- `lrc_content` & `srt_content` - Actual file text (sent as email attachments)
+- `lrc_url` & `srt_url` - Backup download links
+- `video_url` - Only for pro tier
 
 **4. Copy Your Webhook URL**
 - Example: `https://api.gumloop.com/api/v1/flows/abc123/run`

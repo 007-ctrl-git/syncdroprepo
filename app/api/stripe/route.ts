@@ -126,6 +126,8 @@ async function processOrder(orderId: string, tier: "standard" | "pro") {
       tier,
       lrcUrl: gumloopOutputs.lrc_url,
       srtUrl: gumloopOutputs.srt_url,
+      lrcContent: gumloopOutputs.lrc_content,
+      srtContent: gumloopOutputs.srt_content,
       videoUrl: gumloopOutputs.video_url,
       expiresAt: formattedExpiry,
     });

@@ -8,6 +8,8 @@ interface GumloopInput {
 interface GumloopOutput {
   lrc_url: string;
   srt_url: string;
+  lrc_content: string;
+  srt_content: string;
   video_url?: string;
 }
 
